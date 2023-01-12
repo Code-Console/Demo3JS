@@ -42,6 +42,12 @@ let initCubeScale = new THREE.Vector3(1, 1);
 let initCameraPosition = new THREE.Vector3(1, 1);
 let isMouseDown = false;
 let isEdit = false;
+
+const setEditScreen = (_edit) => {
+  isEdit = _edit;
+  const uiContainer = document.getElementById("uiContainer");
+  uiContainer.style.display = _edit ? "grid" : "none";
+};
 function reset(str, screen) {
   const pointer = document.getElementsByClassName("pointer");
   pointer[screen].style.backgroundColor = str == "pointer" ? "#0009" : "#0000";
@@ -199,9 +205,7 @@ const init = () => {
     if (!isEdit) {
       raycaster.setFromCamera(mouse, views[0].camera);
       if (raycaster.intersectObject(cube).length > 0) {
-        isEdit = true;
-        const uiContainer = document.getElementById("uiContainer");
-        uiContainer.style.display = "grid";
+        setEditScreen(true);
       }
     }
   }
@@ -251,6 +255,10 @@ const init = () => {
       renderer.render(scene, camera);
     }
     if (!isEdit) {
+      renderer.setViewport(0, 0, windowWidth, windowHeight);
+      renderer.setScissorTest(false);
+      views[0].camera.aspect = windowWidth / windowHeight;
+      views[0].camera.updateProjectionMatrix();
       renderer.setClearColor(views[0].background);
       renderer.render(scene, views[0].camera);
     }
