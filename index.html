@@ -2,75 +2,43 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>STL viewer</title>
+    <title>Demo 3JS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="styles.css" />
     <script src="https://unpkg.com/three@0.146.0/build/three.min.js"></script>
     <script src="https://unpkg.com/three@0.146.0/examples/js/controls/OrbitControls.js"></script>
     <script src="start.js"></script>
-    <style>
-      body {
-        margin: 0;
-        background: #424242;
-      }
-
-      #c {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-      }
-      .grid-container {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        height: 100vh;
-      }
-      .canvas {
-        border: 1px solid rgba(0, 0, 0, 0.8);
-        padding: 20px;
-        font-size: 30px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-      }
-      img{
-        width: 32px;
-        height: 32px;
-        padding:5px;
-        border: 1px solid black;
-      }
-    </style>
   </head>
 
   <body>
     <canvas id="c"></canvas>
-    <div class="grid-container">
-      <div class="canvas"></div>
-      <div class="canvas">
-        <img src="./pointer.svg" class="pointer" onclick="reset('pointer')"></img>
-        <img src="./zoom.svg" class="zoom" onclick="reset('zoom')"></img>
-        <img src="./rotate.svg" class="rotate" onclick="reset('rotate')"></img>
-        <img src="./camera.svg" class="camera" onclick="reset('camera')"></img>
+    <div class="grid-container" id="uiContainer">
+      <div class="camera-ui"><span class="title">Prospective</span></div>
+      <div class="camera-ui">
+        <img src="./pointer.svg" class="pointer" onclick="reset('pointer',0)"></img>
+        <img src="./zoom.svg" class="zoom" onclick="reset('zoom',0)"></img>
+        <img src="./rotate.svg" class="rotate" onclick="reset('rotate',0)"></img>
+        <img src="./camera.svg" class="camera" onclick="reset('camera',0)"></img>
       </div>
-      <div class="canvas">
-        <img src="./pointer.svg" class="pointer" onclick="transform()"></img>
-        <img src="./zoom.svg" class="zoom" onclick="zoom()"></img>
-        <img src="./rotate.svg" class="rotate" onclick="rotate()"></img>
-        <img src="./camera.svg" class="camera" onclick="camera()"></img>
+      <div class="camera-ui">
+        <img src="./pointer.svg" class="pointer" onclick="reset('pointer',1)"></img>
+        <img src="./zoom.svg" class="zoom" onclick="reset('zoom',1)"></img>
+        <img src="./rotate.svg" class="rotate" onclick="reset('rotate',1)"></img>
+        <img src="./camera.svg" class="camera" onclick="reset('camera',1)"></img>
       </div>
-      <div class="canvas">
-        <img src="./pointer.svg" class="pointer" onclick="transform()"></img>
-        <img src="./zoom.svg" class="zoom" onclick="zoom()"></img>
-        <img src="./rotate.svg" class="rotate" onclick="rotate()"></img>
-        <img src="./camera.svg" class="camera" onclick="camera()"></img>
+      <div class="camera-ui">
+        <img src="./pointer.svg" class="pointer" onclick="reset('pointer',2)"></img>
+        <img src="./zoom.svg" class="zoom" onclick="reset('zoom',2)"></img>
+        <img src="./rotate.svg" class="rotate" onclick="reset('rotate',2)"></img>
+        <img src="./camera.svg" class="camera" onclick="reset('camera',2)"></img>
       </div>
     </div>
     <script>
       window.onload = () => {
         init();
+        reset('pointer',0);
+        reset('pointer',1);
+        reset('pointer',2);
       };
     </script>
   </body>

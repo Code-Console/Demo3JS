@@ -6,7 +6,7 @@ const views = [
     width: 0.5,
     height: 0.5,
     background: new THREE.Color(0.5, 0.0, 0.0),
-    button: "rotate",
+    button: -1,
   },
   {
     left: 0.0,
@@ -41,37 +41,30 @@ let initCubeRotate = new THREE.Vector3(1, 1);
 let initCubeScale = new THREE.Vector3(1, 1);
 let initCameraPosition = new THREE.Vector3(1, 1);
 let isMouseDown = false;
-let stylesheet = document.styleSheets[0];
-
-function reset(str) {
+let isEdit = false;
+function reset(str, screen) {
   const pointer = document.getElementsByClassName("pointer");
-  for (i = 0; i < pointer.length; i++) {
-    pointer[i].style.backgroundColor = str == "pointer" ? "#0009" : "#0000";
-  }
+  pointer[screen].style.backgroundColor = str == "pointer" ? "#0009" : "#0000";
+
   const zoom = document.getElementsByClassName("zoom");
-  for (i = 0; i < zoom.length; i++) {
-    zoom[i].style.backgroundColor = str == "zoom" ? "#0009" : "#0000";
-  }
+  zoom[screen].style.backgroundColor = str == "zoom" ? "#0009" : "#0000";
+
   const rotate = document.getElementsByClassName("rotate");
-  for (i = 0; i < rotate.length; i++) {
-    rotate[i].style.backgroundColor = str == "rotate" ? "#0009" : "#0000";
-  }
+  rotate[screen].style.backgroundColor = str == "rotate" ? "#0009" : "#0000";
+
   const camera = document.getElementsByClassName("camera");
-  for (i = 0; i < camera.length; i++) {
-    camera[i].style.backgroundColor = str == "camera" ? "#0009" : "#0000";
-  }
-  views[0].button = str;
+  camera[screen].style.backgroundColor = str == "camera" ? "#0009" : "#0000";
+  if (screen == 0) views[2].button = str;
+  if (screen == 1) views[1].button = str;
+  if (screen == 2) views[3].button = str;
 }
 const init = () => {
-  stylesheet = document.styleSheets[0];
-  initCubePosition = new THREE.Vector3(1, 1);
   const canvas = document.querySelector("#c");
   const scene = new THREE.Scene();
   const frustumSize = 10;
   const aspect = window.innerWidth / window.innerHeight;
   for (let i = 0; i < views.length; i++) {
     let camera;
-
     if (i == 0) {
       camera = new THREE.PerspectiveCamera(
         75,
@@ -96,7 +89,6 @@ const init = () => {
       if (i == 3) camera.position.set(0, 0, 10);
     }
     views[i].camera = camera;
-
     camera.lookAt(0, 0, 0);
   }
 
@@ -106,40 +98,41 @@ const init = () => {
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
-  const texture = new THREE.TextureLoader().load("crate.gif");
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshPhongMaterial({ map: texture });
-  const cube = new THREE.Mesh(geometry, material);
+  const cube = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshPhongMaterial({
+      map: new THREE.TextureLoader().load("crate.gif"),
+    })
+  );
   scene.add(cube);
   const light = new THREE.DirectionalLight();
   light.position.set(0, 0, 10);
   scene.add(light);
-
   scene.add(new THREE.AmbientLight());
 
   const helper = new THREE.GridHelper(10, 10);
   scene.add(helper);
   function onMouseDown(event) {
     event.preventDefault();
-
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
     initMouse.set(mouse.x, mouse.y);
+
     initCubePosition.copy(cube.position);
     initCubeRotate.copy(cube.rotation);
     initCubeScale.copy(cube.scale);
     initCameraPosition.copy(views[0].camera.position);
+
     if (mouse.x > 0 && mouse.y > 0) isMouseDown = 2;
     if (mouse.x < 0 && mouse.y < 0) isMouseDown = 1;
     if (mouse.x > 0 && mouse.y < 0) isMouseDown = 3;
   }
   function onMouseMove(event) {
     event.preventDefault();
-
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    if (views[0].button == "pointer") {
+    if (isMouseDown < 1 || !isEdit) return;
+    if (views[isMouseDown].button == "pointer") {
       if (isMouseDown == 2) {
         cube.position.x = initCubePosition.x + (mouse.x - initMouse.x) * 10;
         cube.position.y = initCubePosition.y + (mouse.y - initMouse.y) * 10;
@@ -153,7 +146,7 @@ const init = () => {
         cube.position.y = initCubePosition.y + (mouse.y - initMouse.y) * 10;
       }
     }
-    if (views[0].button == "rotate") {
+    if (views[isMouseDown].button == "rotate") {
       if (isMouseDown == 2) {
         cube.rotation.y = initCubeRotate.y + (mouse.x - initMouse.x) * 10;
         cube.rotation.x = initCubeRotate.x + (mouse.y - initMouse.y) * 10;
@@ -167,7 +160,7 @@ const init = () => {
         cube.rotation.z = initCubeRotate.z + (mouse.y - initMouse.y) * 10;
       }
     }
-    if (views[0].button == "zoom") {
+    if (views[isMouseDown].button == "zoom") {
       if (isMouseDown == 2) {
         cube.scale.x = initCubeScale.x + (mouse.x - initMouse.x) * 10;
         cube.scale.y = initCubeScale.y + (mouse.y - initMouse.y) * 10;
@@ -181,9 +174,8 @@ const init = () => {
         cube.scale.y = initCubeScale.y + (mouse.y - initMouse.y) * 10;
       }
     }
-    if (views[0].button == "camera" && isMouseDown > 0) {
+    if (views[isMouseDown].button == "camera" && isMouseDown > 0) {
       const camera = views[0].camera;
-      console.log(camera);
       if (isMouseDown == 2) {
         camera.position.x = initCameraPosition.x + (mouse.x - initMouse.x) * 10;
         camera.position.y = initCameraPosition.y + (mouse.y - initMouse.y) * 10;
@@ -203,18 +195,43 @@ const init = () => {
 
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    console.log("Up");
     isMouseDown = -1;
+    if (!isEdit) {
+      raycaster.setFromCamera(mouse, views[0].camera);
+      if (raycaster.intersectObject(cube).length > 0) {
+        isEdit = true;
+        const uiContainer = document.getElementById("uiContainer");
+        uiContainer.style.display = "grid";
+      }
+    }
   }
+  const onWindowResize = () => {
+    const aspect = window.innerWidth / window.innerHeight;
+    for (let ii = 0; ii < views.length; ++ii) {
+      const camera = views[ii].camera;
+      if (ii == 0) {
+        camera.aspect = aspect;
+        camera.updateProjectionMatrix();
+      } else {
+        camera.left = (-frustumSize * aspect) / 2;
+        camera.right = (frustumSize * aspect) / 2;
+        camera.top = frustumSize / 2;
+        camera.bottom = -frustumSize / 2;
+        camera.updateProjectionMatrix();
+      }
+    }
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  };
   document.addEventListener("mousemove", onMouseMove);
   document.addEventListener("mousedown", onMouseDown);
   document.addEventListener("mouseup", onMouseUp);
+  window.addEventListener("resize", onWindowResize, false);
   function animate() {
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
     requestAnimationFrame(animate);
 
-    for (let ii = 0; ii < views.length; ++ii) {
+    for (let ii = 0; ii < views.length && isEdit; ++ii) {
       const view = views[ii];
       const camera = view.camera;
 
@@ -232,23 +249,11 @@ const init = () => {
       camera.updateProjectionMatrix();
 
       renderer.render(scene, camera);
-      let vec = new THREE.Vector2(mouse.x + 0.5, mouse.y - 0.5);
-      if (ii == 1) {
-        vec = new THREE.Vector2(mouse.x + 0.5, mouse.y + 0.5);
-      }
-      if (ii == 2) {
-        vec = new THREE.Vector2(mouse.x - 0.5, mouse.y + 0.5);
-      }
-      if (ii == 3) {
-        vec = new THREE.Vector2(mouse.x - 0.5, mouse.y - 0.5);
-      }
-
-      raycaster.setFromCamera(vec, camera);
-
-      const intersection = raycaster.intersectObject(cube);
-      // console.log(ii,intersection);
+    }
+    if (!isEdit) {
+      renderer.setClearColor(views[0].background);
+      renderer.render(scene, views[0].camera);
     }
   }
-
   animate();
 };
