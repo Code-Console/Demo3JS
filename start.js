@@ -42,7 +42,7 @@ let initCubeScale = new THREE.Vector3(1, 1);
 let initCameraPosition = new THREE.Vector3(1, 1);
 let isMouseDown = false;
 let isEdit = false;
-
+let checkPoints, cube;
 const setEditScreen = (_edit) => {
   isEdit = _edit;
   const uiContainer = document.getElementById("uiContainer");
@@ -67,7 +67,7 @@ function reset(str, screen) {
 const init = () => {
   const canvas = document.querySelector("#c");
   const scene = new THREE.Scene();
-  const frustumSize = 10;
+  let frustumSize = 5;
   const aspect = window.innerWidth / window.innerHeight;
   for (let i = 0; i < views.length; i++) {
     let camera;
@@ -80,7 +80,7 @@ const init = () => {
       );
       camera.position.set(0, 3, 10);
       const helper = new THREE.CameraHelper(camera);
-      scene.add(helper);
+      // scene.add(helper);
     } else {
       camera = new THREE.OrthographicCamera(
         (frustumSize * aspect) / -2,
@@ -104,13 +104,25 @@ const init = () => {
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
-  const cube = new THREE.Mesh(
+  cube = new THREE.Mesh(
     new THREE.BoxGeometry(1, 1, 1),
     new THREE.MeshPhongMaterial({
       map: new THREE.TextureLoader().load("crate.gif"),
+      transparent :true,
+      opacity:.9
     })
   );
   scene.add(cube);
+  checkPoints = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshPhongMaterial({
+      color: 0xffff00,
+    })
+  );
+  checkPoints.position.set(0, 0.5, 0.5);
+  checkPoints.scale.set(0.1, 0.1, 0.1);
+  scene.add(checkPoints);
+
   const light = new THREE.DirectionalLight();
   light.position.set(0, 0, 10);
   scene.add(light);
@@ -226,9 +238,26 @@ const init = () => {
     }
     renderer.setSize(window.innerWidth, window.innerHeight);
   };
+  let larpF = 0,
+    larpB = 0,
+    delay = 0;
+  const onwheel = (event) => {
+    if (event.deltaY > 0) {
+      larpF += 0.01;
+      views[0].camera.position.z += larpF;
+    } else {
+      larpB -= 0.01;
+      views[0].camera.position.z += larpB;
+    }
+    delay = 10;
+    console.log(event.deltaY);
+  };
+
   document.addEventListener("mousemove", onMouseMove);
   document.addEventListener("mousedown", onMouseDown);
   document.addEventListener("mouseup", onMouseUp);
+  document.addEventListener("wheel", onwheel);
+  document.addEventListener("keydown", dealWithKeyboard);
   window.addEventListener("resize", onWindowResize, false);
   function animate() {
     const windowWidth = window.innerWidth;
@@ -248,11 +277,38 @@ const init = () => {
       renderer.setScissor(left, bottom, width, height);
       renderer.setScissorTest(true);
       renderer.setClearColor(view.background);
-
+      // camera.lookAt(cube.position.x, cube.position.y, cube.position.z);
+      // camera.position.set(cube.position.x, cube.position.y, cube.position.z);
+      if (ii == 3) {
+        camera.position.y = cube.position.y;
+        camera.position.x = cube.position.x;
+      }
+      if (ii == 1) {
+        camera.position.y = cube.position.y;
+        camera.position.z = cube.position.z;
+      }
+      if (ii == 2) {
+        camera.position.x = cube.position.x;
+        camera.position.z = cube.position.z;
+      }
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
 
       renderer.render(scene, camera);
+
+      if (ii === 3) {
+        let newfrustumSize = cube.scale.x;
+        if (newfrustumSize < cube.scale.z) newfrustumSize = cube.scale.z;
+        if (newfrustumSize < cube.scale.y) newfrustumSize = cube.scale.y;
+
+        frustumSize = newfrustumSize * 2;
+
+        camera.left = (-frustumSize * aspect) / 2;
+        camera.right = (frustumSize * aspect) / 2;
+        camera.top = frustumSize / 2;
+        camera.bottom = -frustumSize / 2;
+        camera.updateProjectionMatrix();
+      }
     }
     if (!isEdit) {
       renderer.setViewport(0, 0, windowWidth, windowHeight);
@@ -262,6 +318,21 @@ const init = () => {
       renderer.setClearColor(views[0].background);
       renderer.render(scene, views[0].camera);
     }
+    delay--;
+    if (delay < 0) {
+      if (larpF > 0) {
+        larpF -= 0.01;
+        views[0].camera.position.z += larpF;
+      }
+      if (larpB < 0) {
+        larpB += 0.01;
+        views[0].camera.position.z += larpB;
+      }
+    }
+    const isInside = correctPointInBox(checkPoints?.position, cube);
+    checkPoints.material.color = isInside
+      ? new THREE.Color(0xffff00)
+      : new THREE.Color(0xff00ff);
   }
   animate();
 };
